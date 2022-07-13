@@ -29,7 +29,7 @@ class Jefferson_Cipher_Wheel:
         lines               = 0
         encryptedMessages   = []
 
-        while( (prompt not in ['e','d','exit']) or (int(lines) <= 0) ):
+        while( (prompt.lower() not in ['e','d','exit']) or (int(lines) <= 0) ):
             prompt = input("Would you like to (E)ncrypt or (D)ecrypt? ")
 
             lines = input("How many lines does your message have? (Each sentence is a line): ")
