@@ -1,5 +1,6 @@
 import datetime
 from datetime import datetime
+from math import ceil
 
 import random
 
@@ -78,16 +79,16 @@ class Encrypter:
     # Returns the encrypted message
     def encrypt_message(self, encrypted_alphabet):
         base_alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
-        new_message = ''
+        encrypted_message = ''
 
         # Add a letter from the encrypted alphabet whos index is the same as the letter in the base alphabet
         for i in range(0, len(self.message)):
-            new_message += encrypted_alphabet[base_alphabet.index(self.message[i])]
+            encrypted_message += encrypted_alphabet[base_alphabet.index(self.message[i])]
 
         
-        #print(new_message) # Testing message output
+        #print(encrypted_message) # Testing message output
 
-        return new_message
+        return encrypted_message
 
     # End encrypt_message
 
@@ -95,17 +96,63 @@ class Encrypter:
 
     # Scrambles the message into a random order
     # Returns the scrambled message
-    def scramble_message(self):
-        message_as_list = []
+    def scramble_message(self, encrypted_message):
+
+        message_as_list = [ [] for _ in range (0, ceil(len(encrypted_message)/ 5) )]
+
+        for i in range(0, len(message_as_list)):
+            for j in range(0, 5):
+                try:
+                    message_as_list[i].append(encrypted_message[i*5 + j])
+
+                except:
+                    message_as_list[i].append(chr(97 + j))
 
 
+        #print(message_as_list) # Verify the message got put in correctly
+
+
+        column_location = []
+        row_location    = []
+
+        # Column (y) Seed = datetime + the value of the first letter times the value of the last letter
+        random.seed(self.datetime_value + (ord(message_as_list[0][0]) * ord(message_as_list[len(message_as_list) - 1][len(message_as_list[0]) - 1]))) 
+
+        # Since the entire 3D List will always be filled, we can multiply number of inner lists by how many values are stored in each to get max length
+        for i in range(0, len(message_as_list) * len(message_as_list[0])):
+            column_location.append(random.randrange(0, len(message_as_list)))
+
+        
+        # Row (x) Seed = datetime + value of the second letter times the value of the second to last letter
+        random.seed(self.datetime_value + (ord(message_as_list[0][0]) * ord(message_as_list[len(message_as_list) - 1][len(message_as_list[0]) - 1]))) 
+        for i in range(0, len(message_as_list) * len(message_as_list[0])):
+            row_location.append(random.randrange(0, len(message_as_list[0])))
+
+        row_location.reverse() # Reverse the list to further randomness just in case
+
+        #print(column_location) # Ensure value correctness
+        #print(row_location) # Ensure value correctness
+
+        for i in range(0, len(message_as_list)):
+            for j in range(0, len(message_as_list[0])):
+                temp_value = message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]
+                message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]  = message_as_list[i][j]
+                message_as_list[i][j] = temp_value
+
+        #print(message_as_list)
+
+        return message_as_list
+
+        # End scramble_message
+        
     # To do
-    # scrambler
     # Output
+    # Reverse
             
 
 
-test = Encrypter(".", "A test Test", "no")
+test = Encrypter(".", "A test Testt t", "no")
 test.confirm()
 alphabet = test.create_encrypted_alphabet()
-test.encrypt_message(alphabet)
+message = test.encrypt_message(alphabet)
+test.scramble_message(message)
