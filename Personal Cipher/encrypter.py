@@ -1,5 +1,7 @@
 import datetime
 from datetime import datetime
+from datetime import date
+from email import message
 from math import ceil
 
 import random
@@ -116,7 +118,7 @@ class Encrypter:
         row_location    = []
 
         # Column (y) Seed = datetime + the value of the first letter times the value of the last letter
-        random.seed(self.datetime_value + (ord(message_as_list[0][0]) * ord(message_as_list[len(message_as_list) - 1][len(message_as_list[0]) - 1]))) 
+        random.seed(self.datetime_value + (ord(self.encryption_key[0]) * ord(self.encryption_key[len(self.encryption_key) - 1]))) 
 
         # Since the entire 3D List will always be filled, we can multiply number of inner lists by how many values are stored in each to get max length
         for i in range(0, len(message_as_list) * len(message_as_list[0])):
@@ -124,35 +126,261 @@ class Encrypter:
 
         
         # Row (x) Seed = datetime + value of the second letter times the value of the second to last letter
-        random.seed(self.datetime_value + (ord(message_as_list[0][0]) * ord(message_as_list[len(message_as_list) - 1][len(message_as_list[0]) - 1]))) 
+        random.seed(self.datetime_value + (ord(self.encryption_key[1]) * ord(self.encryption_key[len(self.encryption_key) - 2]))) 
         for i in range(0, len(message_as_list) * len(message_as_list[0])):
             row_location.append(random.randrange(0, len(message_as_list[0])))
 
-        row_location.reverse() # Reverse the list to further randomness just in case
+        row_location.reverse() # Reverse the list to handle bias
 
         #print(column_location) # Ensure value correctness
         #print(row_location) # Ensure value correctness
 
+        
         for i in range(0, len(message_as_list)):
             for j in range(0, len(message_as_list[0])):
+                # Column and Row are in range for 0->14 so janky looking math just to read them across their range
                 temp_value = message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]
                 message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]  = message_as_list[i][j]
                 message_as_list[i][j] = temp_value
 
         #print(message_as_list)
 
-        return message_as_list
+        scrambled_encrypted_message = ''
+
+
+        for i in range(0, len(message_as_list[0])):
+            for j in range(0, len(message_as_list)):
+                # For a 3D array, read each column then move on
+                scrambled_encrypted_message += message_as_list[j][i]
+
+
+        #print(scrambled_encrypted_message) # Error Testing
+
+        return scrambled_encrypted_message
 
         # End scramble_message
-        
-    # To do
-    # Output
-    # Reverse
+
+
+    # Outputs the message to a file including the necessary information for de-scrambling
+    # Output is formatted as follows and DOES NOT APPEND to the document
+    # This means that Output will WIPE THE FILE
+    # Message: <Message as one line here>
+    # Key: <Encryption Key in the form ascii-letter_ascii-letter...>
+    # Timestamp: <Timestamp Format>
+    def output_message(self, final_message):
+        try:
+            with open(self.file_location  + '/' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '.txt', 'w') as out_file:
+                out_file.write(final_message + '\n')
+                for i in range(0, len(self.encryption_key)):
+                    try:
+                        if(i == (len(self.encryption_key) - 1)):
+                            raise Exception('No Underscore Needed')
+                        
+                        out_file.write(str(ord(self.encryption_key[i])) + '_')
+
+                    except:
+                        out_file.write(str(ord(self.encryption_key[i])) + '\n')
+
+                out_file.write(str(self.datetime_value))
+
+                out_file.close()
+
+        except:
+            with open(self.file_location + '\\' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '.txt', 'w') as out_file:
+                out_file.write(final_message + '\n')
+                for i in range(0, len(self.encryption_key)):
+                    try:
+                        if(i == (len(self.encryption_key) - 1)):
+                            raise Exception('No Underscore Needed')
+                        
+                        out_file.write(str(ord(self.encryption_key[i])) + '_')
+
+                    except:
+                        out_file.write(str(ord(self.encryption_key[i])) + '\n')
+
+                out_file.write(str(self.datetime_value))
+
+                out_file.close()
             
 
+    # End output_message
 
-test = Encrypter(".", "A test Testt t", "no")
-test.confirm()
-alphabet = test.create_encrypted_alphabet()
-message = test.encrypt_message(alphabet)
-test.scramble_message(message)
+
+
+
+# This class will Decrypt a message given a file
+class Decrypter:
+
+    def __init__(self, in_file_location, out_file_location):
+        
+        # All variables set up
+        self.file_location = out_file_location # Only need to save the out location for later
+
+        self.encrypted_message = ''
+        self.encryption_key = ''
+        self.datetime_value = ''
+
+        # Read in from the given file
+        with open(in_file_location) as in_file:
+            file_lines = in_file.readlines()
+
+            self.encrypted_message = str(file_lines[0]).strip()
+            
+            # Add each individual letter split at _
+            temp_key = file_lines[1].split('_')
+            for i in range(0, len(temp_key)):
+                self.encryption_key += chr(int(temp_key[i]))
+
+            self.datetime_value = float(file_lines[2])
+        
+    # End init
+
+
+    # Confirms that the file storage location, the message, and the datetime value were inputted and reformatted correctly
+    # This function is for testing purposes. It does not need to be used.
+    def confirm(self):
+        print("File will be stored at: {0} \nThe message is: {1}\nThe datetime value is: {2}".format(self.file_location, self.encrypted_message, self.datetime_value))
+    # End confirm
+
+
+
+    # This function descrambles the scrambled message
+    # Returns the descrambled message
+    def descramble_message(self):
+
+        message_as_list = [ [] for _ in range (0, ceil(len(self.encrypted_message)/ 5) )]
+
+        for i in range(0, 5):
+            for j in range(0, len(message_as_list)):
+                message_as_list[j].append(self.encrypted_message[(i*3)+j])
+
+        #print(message_as_list) # Checking output
+
+
+        column_location = []
+        row_location    = []
+
+        # Column (y) Seed = datetime + the value of the first letter times the value of the last letter
+        random.seed(self.datetime_value + (ord(self.encryption_key[0]) * ord(self.encryption_key[len(self.encryption_key) - 1]))) 
+
+        # Since the entire 3D List will always be filled, we can multiply number of inner lists by how many values are stored in each to get max length
+        for i in range(0, len(message_as_list) * len(message_as_list[0])):
+            column_location.append(random.randrange(0, len(message_as_list)))
+
+        
+        # Row (x) Seed = datetime + value of the second letter times the value of the second to last letter
+        random.seed(self.datetime_value + (ord(self.encryption_key[1]) * ord(self.encryption_key[len(self.encryption_key) - 2]))) 
+        for i in range(0, len(message_as_list) * len(message_as_list[0])):
+            row_location.append(random.randrange(0, len(message_as_list[0])))
+
+        row_location.reverse() # Reverse the list to handle bias
+
+
+        for i in range(len(message_as_list) - 1, -1, -1):
+            for j in range(len(message_as_list[0]) - 1, -1 , -1):
+                # Column and Row are in range for 0->14 so janky looking math just to read them across their range
+                temp_value = message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]
+                message_as_list[ column_location[((i + 1) * (j + 1)) - 1]][ row_location[((i + 1) * (j + 1)) - 1] ]  = message_as_list[i][j]
+                message_as_list[i][j] = temp_value
+
+
+        #print(message_as_list) # Verify descrambling
+
+        descrambled_message = ''
+        for i in range(0, len(message_as_list)):
+            for j in range(0, len(message_as_list[0])):
+                descrambled_message += message_as_list[i][j]
+
+        return descrambled_message
+
+    # End descramble_message
+
+
+
+    #
+    #
+    def create_decryption_alphabet(self):
+        base_alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+        decryption_alphabet = base_alphabet.copy()
+
+        # Each letter is moved three times. The seeds for each use different factors.
+        # Seed 0: The year, month, and day
+        # Seed 1: The encryption key
+        # Seed 2: The time
+        movements = [
+            (datetime.fromtimestamp(self.datetime_value).year + datetime.fromtimestamp(self.datetime_value).month) - datetime.fromtimestamp(self.datetime_value).day,
+
+            len(self.encryption_key) + ord(self.encryption_key[0]),
+
+            float(datetime.fromtimestamp(self.datetime_value).time().isoformat().replace(':',''))
+        ]
+
+
+        # Collects the values from the random seeds and adds them to their respective lists
+        locations = [ [], [], []]
+        for i in range(0, len(movements)):
+            random.seed(movements[i])
+
+            for j in range(0, len(decryption_alphabet)):
+                locations[i].append(random.randrange(0, len(decryption_alphabet)))
+
+            # End for
+        # End for
+
+
+        # For each letter
+        for i in range(0, len(decryption_alphabet)):
+            # Find the letter (a.. b.. etc)
+            letter = chr(97 + i)
+
+            # For each movement
+            for j in range(0, len(movements)):
+                # Swap the current letter and whichever letter is in its next location
+                placeholder = decryption_alphabet[locations[j][i]]
+                decryption_alphabet[locations[j][i]] = decryption_alphabet[decryption_alphabet.index(letter)]
+                decryption_alphabet[decryption_alphabet.index(letter)] = placeholder
+
+        #print(decryption_alphabet) # Testing output
+
+        return decryption_alphabet
+
+
+
+    #
+    #
+    def decrypt_message(self, descrambled_message, decryption_alphabet):
+        base_alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+        decrypted_message = ''
+
+        # Add a letter from the base alphabet whos index is the same as the letter in the decryption alphabet
+        for i in range(0, len(descrambled_message)):
+            decrypted_message += base_alphabet[decryption_alphabet.index(descrambled_message[i])]
+
+        
+        #print(decrypted_message) # Testing message output
+
+        return decrypted_message
+
+    # End decrypt message
+
+
+    #
+    #
+    def output_original_message(self, original_message):
+        try:
+            with open(self.file_location + '/' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '_Solved.txt', 'w') as out_file:
+                out_file.write(original_message + '\n')
+                #out_file.write(str(self.datetime_value))
+
+                out_file.close()
+
+        except:
+            with open(self.file_location + '\\' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '_Solved.txt', 'w') as out_file:
+                out_file.write(original_message + '\n')
+                #out_file.write(str(self.datetime_value))
+
+                out_file.close()
+
+        #return 0
+
+    # End output original message
