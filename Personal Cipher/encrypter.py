@@ -1,7 +1,5 @@
 import datetime
 from datetime import datetime
-from datetime import date
-from email import message
 from math import ceil
 
 import random
