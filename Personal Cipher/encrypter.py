@@ -256,7 +256,7 @@ class Decrypter:
 
         for i in range(0, 5):
             for j in range(0, len(message_as_list)):
-                message_as_list[j].append(self.encrypted_message[(i*3)+j])
+                message_as_list[j].append(self.encrypted_message[(i*(len(message_as_list)))+j])
 
         #print(message_as_list) # Checking output
 
@@ -350,8 +350,8 @@ class Decrypter:
 
 
 
-    #
-    #
+    # Decrypts an unscrambled message given the message and the decryption alphabet
+    # Returns the decryption message
     def decrypt_message(self, descrambled_message, decryption_alphabet):
         base_alphabet = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
         decrypted_message = ''
