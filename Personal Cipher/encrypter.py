@@ -1,7 +1,7 @@
 import datetime
 from datetime import datetime
 from math import ceil
-
+import os.path
 import random
 
 
@@ -18,12 +18,41 @@ class Encrypter:
     # End init
 
 
+
+    ## Miscellaneous utility functions
+
+    # This creates an encoded key for output storage purposes
+    def get_encoded_key(self):
+        encoded_key = ''
+        for i in range(0, len(self.encryption_key)):
+                    try:
+                        if(i == (len(self.encryption_key) - 1)):
+                            raise Exception('No Underscore Needed')
+                        
+                        encoded_key += (str(ord(self.encryption_key[i])) + '_')
+
+                    except:
+                        encoded_key += (str(ord(self.encryption_key[i])) + '\n')
+
+        return encoded_key
+
+    # Returns the datetime value
+    def get_datetime(self):
+        return str(self.datetime_value)
+
+
     # Confirms that the file storage location, the message, and the datetime value were inputted and reformatted correctly
     # This function is for testing purposes. It does not need to be used.
     def confirm(self):
-        print("File will be stored at: {0} \nThe message is: {1}\nThe datetime value is: {2}".format(self.file_location, self.message, self.datetime_value))
+        return "File will be stored at: {0} \nThe message is: {1}\nThe datetime value is: {2}".format(self.file_location, self.message, self.datetime_value)
     # End confirm
     
+
+
+
+
+
+
 
     # Creates a encrypted alphabet for use
     # Returns the encrypted alphabet
@@ -167,38 +196,15 @@ class Encrypter:
     # Timestamp: <Timestamp Format>
     def output_message(self, final_message):
         try:
-            with open(self.file_location  + '/' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '.txt', 'w') as out_file:
+            with open(os.path.join(self.file_location, str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H-%M-%S")).replace(' ','_') + '.txt'), 'w') as out_file:
                 out_file.write(final_message + '\n')
-                for i in range(0, len(self.encryption_key)):
-                    try:
-                        if(i == (len(self.encryption_key) - 1)):
-                            raise Exception('No Underscore Needed')
-                        
-                        out_file.write(str(ord(self.encryption_key[i])) + '_')
-
-                    except:
-                        out_file.write(str(ord(self.encryption_key[i])) + '\n')
-
+                out_file.write(self.get_encoded_key())
                 out_file.write(str(self.datetime_value))
 
                 out_file.close()
 
         except:
-            with open(self.file_location + '\\' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '.txt', 'w') as out_file:
-                out_file.write(final_message + '\n')
-                for i in range(0, len(self.encryption_key)):
-                    try:
-                        if(i == (len(self.encryption_key) - 1)):
-                            raise Exception('No Underscore Needed')
-                        
-                        out_file.write(str(ord(self.encryption_key[i])) + '_')
-
-                    except:
-                        out_file.write(str(ord(self.encryption_key[i])) + '\n')
-
-                out_file.write(str(self.datetime_value))
-
-                out_file.close()
+            print('Failure')
             
 
     # End output_message
@@ -237,7 +243,7 @@ class Decrypter:
     # Confirms that the file storage location, the message, and the datetime value were inputted and reformatted correctly
     # This function is for testing purposes. It does not need to be used.
     def confirm(self):
-        print("File will be stored at: {0} \nThe message is: {1}\nThe datetime value is: {2}".format(self.file_location, self.encrypted_message, self.datetime_value))
+        return  "File will be stored at: {0} \nThe message is: {1}\nThe datetime value is: {2}".format(self.file_location, self.encrypted_message, self.datetime_value)
     # End confirm
 
 
@@ -366,18 +372,14 @@ class Decrypter:
     #
     def output_original_message(self, original_message):
         try:
-            with open(self.file_location + '/' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '_Solved.txt', 'w') as out_file:
+            with open(os.path.join(self.file_location, str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H-%M-%S")).replace(' ','_') + '_Solved.txt'), 'w') as out_file:
                 out_file.write(original_message + '\n')
                 #out_file.write(str(self.datetime_value))
 
                 out_file.close()
 
         except:
-            with open(self.file_location + '\\' + str(datetime.fromtimestamp(self.datetime_value).strftime("%Y-%m-%d %H:%M:%S")).replace(' ','_') + '_Solved.txt', 'w') as out_file:
-                out_file.write(original_message + '\n')
-                #out_file.write(str(self.datetime_value))
-
-                out_file.close()
+            print('Failure?')
 
         #return 0
 
